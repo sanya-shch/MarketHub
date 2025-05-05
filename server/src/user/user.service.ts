@@ -11,7 +11,7 @@ export class UserService {
     const user = await this.prisma.user.findUnique({
       where: { id },
       include: {
-        store: true,
+        stores: true,
         favorites: true,
         orders: true,
       },
@@ -24,7 +24,7 @@ export class UserService {
     const user = await this.prisma.user.findUnique({
       where: { email },
       include: {
-        store: true,
+        stores: true,
         favorites: true,
         orders: true,
       },
@@ -41,5 +41,25 @@ export class UserService {
         password: await hash(dto.password),
       },
     });
+  }
+
+  async toggleFavorite(productId: string, userId: string) {
+    const user = await this.getById(userId);
+    const isExists = user.favorites.some(product => product.id === productId);
+
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        favorites: {
+          [isExists ? 'disconnect' : 'connect']: {
+            id: productId,
+          },
+        },
+      },
+    });
+
+    return true;
   }
 }
