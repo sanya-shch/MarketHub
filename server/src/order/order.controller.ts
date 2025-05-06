@@ -17,7 +17,7 @@ export class OrderController {
 
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
-  @Post()
+  @Post('place')
   @Auth()
   placeOrder(@CurrentUser('id') userId: string, @Body() dto: OrderDto) {
     return this.orderService.placeOrder(userId, dto);
