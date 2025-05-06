@@ -89,7 +89,9 @@ export class ProductService {
       },
     });
 
-    const productIds = mostPopularProducts.map(item => item.productId);
+    const productIds = mostPopularProducts.map(
+      item => item.productId as string,
+    );
 
     const products = await this.prisma.product.findMany({
       where: {
@@ -114,7 +116,7 @@ export class ProductService {
     const products = await this.prisma.product.findMany({
       where: {
         category: {
-          title: currentProduct.category.title,
+          title: currentProduct.category?.title,
         },
         NOT: {
           id: currentProduct.id,

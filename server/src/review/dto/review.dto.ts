@@ -5,7 +5,7 @@ export class ReviewDto {
   @IsNotEmpty({ message: 'Review text is required' })
   text: string;
 
-  @IsNumber({ message: 'Rating must be a number' })
+  @IsNumber({}, { message: 'Rating must be a number' })
   @IsNotEmpty({ message: 'Rating is required' })
   @Min(1, { message: 'Minimum rating is 1' })
   @Max(5, { message: 'Maximum rating is 5' })

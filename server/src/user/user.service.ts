@@ -45,11 +45,11 @@ export class UserService {
 
   async toggleFavorite(productId: string, userId: string) {
     const user = await this.getById(userId);
-    const isExists = user.favorites.some(product => product.id === productId);
+    const isExists = user?.favorites.some(product => product.id === productId);
 
     await this.prisma.user.update({
       where: {
-        id: user.id,
+        id: user?.id,
       },
       data: {
         favorites: {

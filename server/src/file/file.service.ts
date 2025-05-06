@@ -12,7 +12,7 @@ export class FileService {
 
     const response: FileResponse[] = await Promise.all(
       files.map(async file => {
-        const originalName = `${Data.now()}-${file.originalname}`;
+        const originalName = `${Date.now()}-${file.originalname}`;
 
         await writeFile(`${uploadedFolder}/${originalName}`, file.buffer);
 

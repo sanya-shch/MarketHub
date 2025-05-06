@@ -33,7 +33,7 @@ export class AuthService {
   async register(dto: AuthDto) {
     const oldUser = await this.userService.getByEmail(dto.email);
 
-    if (!oldUser) throw new BadRequestException('User already exists');
+    if (oldUser) throw new BadRequestException('User already exists');
 
     const user = await this.userService.create(dto);
     const tokens = this.issueTokens(user.id);
@@ -47,6 +47,9 @@ export class AuthService {
     if (!result) throw new UnauthorizedException('Invalid refresh token');
 
     const user = await this.userService.getById(result.id);
+
+    if (!user) throw new UnauthorizedException('User not found');
+
     const tokens = this.issueTokens(user.id);
 
     return { user, ...tokens };
