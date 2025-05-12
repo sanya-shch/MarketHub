@@ -1,10 +1,9 @@
 import { ICategory } from './category.interface';
 import { IColor } from './color.interface';
 import { IReview } from './review.interface';
-import { IStore } from './store.interface';
 
 export interface IProduct {
-    is: string;
+    id: string;
     title: string;
     description: string;
     price: number;
@@ -12,7 +11,7 @@ export interface IProduct {
     category: ICategory;
     reviews: IReview[];
     color: IColor;
-    store: IStore;
+    storeId: string;
 }
 
 export interface IProductInput
