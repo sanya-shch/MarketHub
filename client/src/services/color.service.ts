@@ -15,7 +15,7 @@ class ColorService {
     }
 
     async getById(id: string) {
-        const { data } = await axiosClassic<IColor[]>({
+        const { data } = await axiosWithAuth<IColor>({
             url: API_URL.colors(`/by-id/${id}`),
             method: 'GET',
         });

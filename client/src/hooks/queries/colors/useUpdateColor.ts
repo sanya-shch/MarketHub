@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 import toast from 'react-hot-toast';
 
@@ -7,8 +7,11 @@ import { colorService } from '@/services/color.service';
 
 import { IColorInput } from '@/shared/types/color.interface';
 
+import { STORE_URL } from '@/config/url.config';
+
 export const useUpdateColor = () => {
-    const params = useParams<{ colorId: string }>();
+    const params = useParams<{ storeId: string; colorId: string }>();
+    const { push } = useRouter();
     const queryClient = useQueryClient();
 
     const { mutate: updateColor, isPending: isLoadingUpdate } = useMutation({
@@ -21,6 +24,8 @@ export const useUpdateColor = () => {
             });
 
             toast.success('Color updated');
+
+            push(STORE_URL.colors(params.storeId));
         },
         onError() {
             toast.error('Error updating color');
