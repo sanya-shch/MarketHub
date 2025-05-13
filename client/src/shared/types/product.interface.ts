@@ -15,7 +15,10 @@ export interface IProduct {
 }
 
 export interface IProductInput
-    extends Omit<IProduct, 'id' | 'reviews' | 'store' | 'category' | 'color'> {
+    extends Omit<
+        IProduct,
+        'id' | 'reviews' | 'storeId' | 'category' | 'color'
+    > {
     categoryId: string;
     colorId: string;
 }
