@@ -1,4 +1,4 @@
-import { Logo } from '../../main-layout/Logo';
+import { Logo } from '../../main-layout/header/Logo';
 
 import { Navigation } from './Navigation';
 
