@@ -20,8 +20,11 @@ export class ReviewController {
 
   @Auth()
   @Get('by-storeId/:storeId')
-  async getByStoreId(@Param('storeId') storeId: string) {
-    return this.reviewService.getByStoreId(storeId);
+  async getByStoreId(
+    @CurrentUser('id') userId: string,
+    @Param('storeId') storeId: string,
+  ) {
+    return this.reviewService.getByStoreId(storeId, userId);
   }
 
   @UsePipes(new ValidationPipe())

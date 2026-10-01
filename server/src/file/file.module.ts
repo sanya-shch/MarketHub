@@ -11,6 +11,13 @@ import { path } from 'app-root-path';
     ServeStaticModule.forRoot({
       rootPath: `${path}/uploads`,
       serveRoot: '/uploads',
+      serveStaticOptions: {
+        dotfiles: 'deny',
+        setHeaders: res => {
+          res.setHeader('X-Content-Type-Options', 'nosniff');
+          res.setHeader('Content-Security-Policy', "default-src 'none'");
+        },
+      },
     }),
   ],
 })

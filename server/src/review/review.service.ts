@@ -1,22 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { ReviewDto } from './dto/review.dto';
-import { ProductService } from 'src/product/product.service';
+import { assertStoreOwner } from 'src/common/ownership';
+
+const REVIEW_USER_SELECT = { id: true, name: true, picture: true } as const;
 
 @Injectable()
 export class ReviewService {
-  constructor(
-    private prisma: PrismaService,
-    private productService: ProductService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
-  async getByStoreId(storeId: string) {
+  async getByStoreId(storeId: string, userId: string) {
+    await assertStoreOwner(this.prisma, storeId, userId);
+
     return this.prisma.review.findMany({
       where: {
         storeId,
       },
       include: {
-        user: true,
+        user: { select: REVIEW_USER_SELECT },
       },
     });
   }
@@ -25,7 +26,7 @@ export class ReviewService {
     const review = await this.prisma.review.findUnique({
       where: { id, userId },
       include: {
-        user: true,
+        user: { select: REVIEW_USER_SELECT },
       },
     });
 
@@ -40,11 +41,20 @@ export class ReviewService {
     storeId: string,
     dto: ReviewDto,
   ) {
-    await this.productService.getById(productId);
+    // The store comes from the product itself, the URL value must match it.
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+      select: { storeId: true },
+    });
+
+    if (!product || product.storeId !== storeId) {
+      throw new NotFoundException('Product not found');
+    }
 
     return this.prisma.review.create({
       data: {
-        ...dto,
+        text: dto.text,
+        rating: dto.rating,
         product: {
           connect: {
             id: productId,

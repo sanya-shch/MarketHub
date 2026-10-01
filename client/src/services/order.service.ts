@@ -1,16 +1,12 @@
-import { OrderStatus } from '@/shared/types/order.interface';
-
 import { API_URL } from '@/config/api.config';
 
 import { axiosWithAuth } from '@/api/api.interceptors';
 
+// Price, store and status are not sent: the server takes them from the DB.
 type TypeData = {
-    status?: OrderStatus;
     items: {
-        quantity: number;
-        price: number;
         productId: string;
-        storeId: string;
+        quantity: number;
     }[];
 };
 

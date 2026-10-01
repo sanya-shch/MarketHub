@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as dayjs from 'dayjs';
 import 'dayjs/locale/en';
 import { PrismaService } from 'src/prisma.service';
+import { assertStoreOwner } from 'src/common/ownership';
 
 dayjs.locale('en');
 
@@ -24,7 +25,9 @@ const monthNames = [
 export class StatisticsService {
   constructor(private prisma: PrismaService) {}
 
-  async getMainStatistics(storeId: string) {
+  async getMainStatistics(storeId: string, userId: string) {
+    await assertStoreOwner(this.prisma, storeId, userId);
+
     const totalRevenue = await this.calculateTotalRevenue(storeId);
     const productsCount = await this.countProducts(storeId);
     const categoriesCount = await this.countCategories(storeId);
@@ -38,7 +41,9 @@ export class StatisticsService {
     ];
   }
 
-  async getMiddleStatistics(storeId: string) {
+  async getMiddleStatistics(storeId: string, userId: string) {
+    await assertStoreOwner(this.prisma, storeId, userId);
+
     const monthlySales = await this.calculateMonthlySales(storeId);
     const lastUsers = await this.getLastUsers(storeId);
 
@@ -117,7 +122,8 @@ export class StatisticsService {
         },
       },
       include: {
-        items: true,
+        // only this store's items, otherwise other stores' sales leak in
+        items: { where: { storeId } },
       },
     });
 

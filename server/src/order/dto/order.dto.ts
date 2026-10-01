@@ -1,38 +1,32 @@
-import { OrderStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
   IsArray,
-  IsEnum,
-  IsNumber,
-  IsOptional,
+  IsInt,
   IsString,
+  Max,
+  Min,
   ValidateNested,
 } from 'class-validator';
 
-export class OrderDto {
-  @IsOptional()
-  @IsEnum(OrderStatus, {
-    message:
-      'Order status must be one of' + Object.values(OrderStatus).join(', '),
-  })
-  status: OrderStatus;
-
-  @IsArray({ message: 'There are no items in the order' })
-  @ValidateNested({ each: true })
-  @Type(() => OrderItemDto)
-  items: OrderItemDto[];
-}
-
 export class OrderItemDto {
-  @IsNumber({}, { message: 'Quantity must be a number' })
-  quantity: number;
-
-  @IsNumber({}, { message: 'Price must be a number' })
-  price: number;
-
   @IsString({ message: 'Product ID must be a string' })
   productId: string;
 
-  @IsString({ message: 'Store ID must be a string' })
-  storeId: number;
+  @IsInt({ message: 'Quantity must be an integer' })
+  @Min(1, { message: 'Quantity must be at least 1' })
+  @Max(99, { message: 'Quantity is too large' })
+  quantity: number;
+}
+
+// Price, store and status are deliberately NOT part of the request:
+// the server takes them from the database.
+export class OrderDto {
+  @IsArray({ message: 'There are no items in the order' })
+  @ArrayMinSize(1, { message: 'There are no items in the order' })
+  @ArrayMaxSize(50, { message: 'Too many items in the order' })
+  @ValidateNested({ each: true })
+  @Type(() => OrderItemDto)
+  items: OrderItemDto[];
 }

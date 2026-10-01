@@ -37,6 +37,19 @@ export class UserService {
     return user;
   }
 
+  /** Only for credential checks. Never return this object to the client. */
+  async getByEmailWithPassword(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+      omit: { password: false },
+      include: {
+        stores: true,
+        favorites: true,
+        orders: true,
+      },
+    });
+  }
+
   async create(dto: AuthDto) {
     return this.prisma.user.create({
       data: {

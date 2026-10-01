@@ -14,6 +14,7 @@ import {
 import { ProductService } from './product.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { ProductDto } from './dto/product.dto';
+import { CurrentUser } from 'src/user/decorators/user.decorator';
 
 @Controller('products')
 export class ProductController {
@@ -53,22 +54,30 @@ export class ProductController {
   @HttpCode(200)
   @Auth()
   @Post(':storeId')
-  async create(@Param('storeId') storeId: string, @Body() dto: ProductDto) {
-    return this.productService.create(storeId, dto);
+  async create(
+    @CurrentUser('id') userId: string,
+    @Param('storeId') storeId: string,
+    @Body() dto: ProductDto,
+  ) {
+    return this.productService.create(storeId, userId, dto);
   }
 
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Auth()
   @Put(':id')
-  async update(@Param('id') id: string, @Body() dto: ProductDto) {
-    return this.productService.update(id, dto);
+  async update(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+    @Body() dto: ProductDto,
+  ) {
+    return this.productService.update(id, userId, dto);
   }
 
   @HttpCode(200)
   @Auth()
   @Delete(':id')
-  async delete(@Param('id') id: string) {
-    return this.productService.delete(id);
+  async delete(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.productService.delete(id, userId);
   }
 }

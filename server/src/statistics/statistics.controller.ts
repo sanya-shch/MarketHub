@@ -1,6 +1,7 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { StatisticsService } from './statistics.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { CurrentUser } from 'src/user/decorators/user.decorator';
 
 @Controller('statistics')
 export class StatisticsController {
@@ -8,13 +9,19 @@ export class StatisticsController {
 
   @Auth()
   @Get('main/:storeId')
-  async getMainStatistics(@Param('storeId') storeId: string) {
-    return this.statisticsService.getMainStatistics(storeId);
+  async getMainStatistics(
+    @CurrentUser('id') userId: string,
+    @Param('storeId') storeId: string,
+  ) {
+    return this.statisticsService.getMainStatistics(storeId, userId);
   }
 
   @Auth()
   @Get('middle/:storeId')
-  async getMiddleStatistics(@Param('storeId') storeId: string) {
-    return this.statisticsService.getMiddleStatistics(storeId);
+  async getMiddleStatistics(
+    @CurrentUser('id') userId: string,
+    @Param('storeId') storeId: string,
+  ) {
+    return this.statisticsService.getMiddleStatistics(storeId, userId);
   }
 }

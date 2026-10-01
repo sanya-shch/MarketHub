@@ -35,7 +35,7 @@ axiosWithAuth.interceptors.response.use(
         const originalRequest = error.config;
 
         if (
-            (error.response.status === 401 ||
+            (error.response?.status === 401 ||
                 errorCatch(error) === 'jwt expired' ||
                 errorCatch(error) === 'jwt must be provided') &&
             error.config &&
@@ -47,8 +47,9 @@ axiosWithAuth.interceptors.response.use(
                 await authService.getNewTokens();
 
                 return axiosWithAuth.request(originalRequest);
-            } catch (error) {
-                if (errorCatch(error) === 'jwt expired') removeFromStorage();
+            } catch {
+                // the refresh token is invalid or expired: drop the stale access token
+                removeFromStorage();
             }
         }
 

@@ -13,6 +13,7 @@ import {
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { CategoryService } from './category.service';
 import { CategoryDto } from './dto/category.dto';
+import { CurrentUser } from 'src/user/decorators/user.decorator';
 
 @Controller('categories')
 export class CategoryController {
@@ -20,8 +21,11 @@ export class CategoryController {
 
   @Auth()
   @Get('by-storeId/:storeId')
-  async getByStoreId(@Param('storeId') storeId: string) {
-    return this.categoryService.getByStoreId(storeId);
+  async getByStoreId(
+    @CurrentUser('id') userId: string,
+    @Param('storeId') storeId: string,
+  ) {
+    return this.categoryService.getByStoreId(storeId, userId);
   }
 
   @Get('by-id/:id')
@@ -33,22 +37,30 @@ export class CategoryController {
   @HttpCode(200)
   @Auth()
   @Post(':storeId')
-  async create(@Param('storeId') storeId: string, @Body() dto: CategoryDto) {
-    return this.categoryService.create(storeId, dto);
+  async create(
+    @CurrentUser('id') userId: string,
+    @Param('storeId') storeId: string,
+    @Body() dto: CategoryDto,
+  ) {
+    return this.categoryService.create(storeId, userId, dto);
   }
 
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Auth()
   @Put(':id')
-  async update(@Param('id') storeId: string, @Body() dto: CategoryDto) {
-    return this.categoryService.update(storeId, dto);
+  async update(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+    @Body() dto: CategoryDto,
+  ) {
+    return this.categoryService.update(id, userId, dto);
   }
 
   @HttpCode(200)
   @Auth()
   @Delete(':id')
-  async delete(@Param('id') storeId: string) {
-    return this.categoryService.delete(storeId);
+  async delete(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.categoryService.delete(id, userId);
   }
 }

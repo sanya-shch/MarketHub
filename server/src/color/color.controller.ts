@@ -13,6 +13,7 @@ import {
 import { ColorService } from './color.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { ColorDto } from './dto/color.dto';
+import { CurrentUser } from 'src/user/decorators/user.decorator';
 
 @Controller('colors')
 export class ColorController {
@@ -20,36 +21,47 @@ export class ColorController {
 
   @Auth()
   @Get('by-storeId/:storeId')
-  async getByStoreId(@Param('storeId') storeId: string) {
-    return this.colorService.getByStoreId(storeId);
+  async getByStoreId(
+    @CurrentUser('id') userId: string,
+    @Param('storeId') storeId: string,
+  ) {
+    return this.colorService.getByStoreId(storeId, userId);
   }
 
   @Auth()
   @Get('by-id/:id')
-  async getById(@Param('id') id: string) {
-    return this.colorService.getById(id);
+  async getById(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.colorService.getById(id, userId);
   }
 
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Auth()
   @Post(':storeId')
-  async create(@Param('storeId') storeId: string, @Body() dto: ColorDto) {
-    return this.colorService.create(storeId, dto);
+  async create(
+    @CurrentUser('id') userId: string,
+    @Param('storeId') storeId: string,
+    @Body() dto: ColorDto,
+  ) {
+    return this.colorService.create(storeId, userId, dto);
   }
 
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Auth()
   @Put(':id')
-  async update(@Param('id') storeId: string, @Body() dto: ColorDto) {
-    return this.colorService.update(storeId, dto);
+  async update(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+    @Body() dto: ColorDto,
+  ) {
+    return this.colorService.update(id, userId, dto);
   }
 
   @HttpCode(200)
   @Auth()
   @Delete(':id')
-  async delete(@Param('id') storeId: string) {
-    return this.colorService.delete(storeId);
+  async delete(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.colorService.delete(id, userId);
   }
 }

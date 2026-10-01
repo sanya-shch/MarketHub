@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { ProductDto } from './dto/product.dto';
+import { assertStoreOwner } from 'src/common/ownership';
 
 @Injectable()
 export class ProductService {
@@ -63,7 +68,8 @@ export class ProductService {
         color: true,
         reviews: {
           include: {
-            user: true,
+            // public endpoint: never expose e-mail & co of reviewers
+            user: { select: { id: true, name: true, picture: true } },
           },
         },
       },
@@ -140,7 +146,10 @@ export class ProductService {
     return products;
   }
 
-  async create(storeId: string, dto: ProductDto) {
+  async create(storeId: string, userId: string, dto: ProductDto) {
+    await assertStoreOwner(this.prisma, storeId, userId);
+    await this.assertRefsBelongToStore(storeId, dto);
+
     return this.prisma.product.create({
       data: {
         title: dto.title,
@@ -154,24 +163,62 @@ export class ProductService {
     });
   }
 
-  async update(id: string, dto: ProductDto) {
-    await this.getById(id);
+  async update(id: string, userId: string, dto: ProductDto) {
+    const product = await this.getOwned(id, userId);
+
+    await this.assertRefsBelongToStore(product.storeId, dto);
 
     return this.prisma.product.update({
       where: {
         id,
       },
-      data: dto,
+      // explicit fields only: never spread the request body into `data`
+      data: {
+        title: dto.title,
+        description: dto.description,
+        price: dto.price,
+        images: dto.images,
+        categoryId: dto.categoryId,
+        colorId: dto.colorId,
+      },
     });
   }
 
-  async delete(id: string) {
-    await this.getById(id);
+  async delete(id: string, userId: string) {
+    await this.getOwned(id, userId);
 
     return this.prisma.product.delete({
       where: {
         id,
       },
     });
+  }
+
+  /** The product must exist and its store must belong to the user. */
+  private async getOwned(id: string, userId: string) {
+    const product = await this.prisma.product.findFirst({
+      where: { id, store: { userId } },
+      select: { id: true, storeId: true },
+    });
+
+    if (!product?.storeId) throw new NotFoundException('Product not found');
+
+    return { id: product.id, storeId: product.storeId };
+  }
+
+  /** Category and color must belong to the same store as the product. */
+  private async assertRefsBelongToStore(storeId: string, dto: ProductDto) {
+    const [categories, colors] = await Promise.all([
+      this.prisma.category.count({ where: { id: dto.categoryId, storeId } }),
+      this.prisma.color.count({ where: { id: dto.colorId, storeId } }),
+    ]);
+
+    if (!categories) {
+      throw new BadRequestException('Category does not belong to this store');
+    }
+
+    if (!colors) {
+      throw new BadRequestException('Color does not belong to this store');
+    }
   }
 }

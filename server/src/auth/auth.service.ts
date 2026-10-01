@@ -1,9 +1,10 @@
 import {
   BadRequestException,
   Injectable,
-  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { hash, verify } from 'argon2';
+import { randomUUID } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma.service';
 import { UserService } from 'src/user/user.service';
@@ -13,15 +14,26 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
-  EXPIRE_DAY_REFRESH_TOKEN = 1;
+  EXPIRE_DAY_REFRESH_TOKEN = 7; // must match the refresh JWT lifetime below
   REFRESH_TOKEN_NAME = 'refreshToken';
+
+  private readonly refreshSecret: string;
+  private dummyHash?: Promise<string>;
 
   constructor(
     private jwt: JwtService,
     private userService: UserService,
     private prisma: PrismaService,
     private configService: ConfigService,
-  ) {}
+  ) {
+    // Fail fast on startup. Refresh tokens use their own secret so that a
+    // refresh token can never be accepted as an access token.
+    this.refreshSecret = configService.getOrThrow<string>('JWT_REFRESH_SECRET');
+
+    if (this.refreshSecret === configService.get('JWT_SECRET')) {
+      throw new Error('JWT_REFRESH_SECRET must differ from JWT_SECRET');
+    }
+  }
 
   async login(dto: AuthDto) {
     const user = await this.validateUser(dto);
@@ -42,9 +54,17 @@ export class AuthService {
   }
 
   async getNewTokens(refreshToken: string) {
-    const result = await this.jwt.verifyAsync(refreshToken);
+    let result: { id?: string };
 
-    if (!result) throw new UnauthorizedException('Invalid refresh token');
+    try {
+      result = await this.jwt.verifyAsync(refreshToken, {
+        secret: this.refreshSecret,
+      });
+    } catch {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    if (!result?.id) throw new UnauthorizedException('Invalid refresh token');
 
     const user = await this.userService.getById(result.id);
 
@@ -62,6 +82,7 @@ export class AuthService {
     });
     const refreshToken = this.jwt.sign(data, {
       expiresIn: '7d',
+      secret: this.refreshSecret,
     });
 
     return {
@@ -71,11 +92,24 @@ export class AuthService {
   }
 
   private async validateUser(dto: AuthDto) {
-    const user = await this.userService.getByEmail(dto.email);
+    const user = await this.userService.getByEmailWithPassword(dto.email);
 
-    if (!user) throw new NotFoundException('User not found');
+    // Same work and same error for "no such user", "Google-only account" and
+    // "wrong password": no user enumeration, no timing difference.
+    const hashToCheck = user?.password ?? (await this.getDummyHash());
+    const isValid = await verify(hashToCheck, dto.password).catch(() => false);
 
-    return user;
+    if (!user || !user.password || !isValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const { password: _password, ...safeUser } = user;
+
+    return safeUser;
+  }
+
+  private getDummyHash() {
+    return (this.dummyHash ??= hash(randomUUID()));
   }
 
   async validateOAuthLogin(req: any) {

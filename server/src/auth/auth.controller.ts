@@ -87,13 +87,12 @@ export class AuthController {
     @Req() req,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { refreshToken, ...response } =
-      await this.authService.validateOAuthLogin(req);
+    const { refreshToken } = await this.authService.validateOAuthLogin(req);
 
     this.authService.addRefreshTokenToResponse(res, refreshToken);
 
-    return res.redirect(
-      `${process.env['CLIENT_URL']}/dashboard?accessToken=${response.accessToken}`,
-    );
+    // The access token must not travel in the URL (browser history, logs,
+    // Referer). The client obtains it from the refresh-token cookie instead.
+    return res.redirect(`${process.env['CLIENT_URL']}/dashboard`);
   }
 }

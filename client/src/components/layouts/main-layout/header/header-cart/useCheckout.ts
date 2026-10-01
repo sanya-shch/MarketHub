@@ -18,10 +18,8 @@ export const useCheckout = () => {
         mutationFn: () =>
             orderService.place({
                 items: items.map(item => ({
-                    price: item.price,
-                    quantity: item.quantity,
                     productId: item.product.id,
-                    storeId: item.product.storeId,
+                    quantity: item.quantity,
                 })),
             }),
         onSuccess({ data }) {

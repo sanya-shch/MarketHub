@@ -32,10 +32,17 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   ) {
     const { emails, photos, displayName } = profile;
 
+    // Never link / create accounts by an e-mail that Google has not verified,
+    // otherwise someone could take over an existing account.
+    const email = emails?.[0]?.value;
+    if (!email || profile._json?.email_verified !== true) {
+      return done(null, false);
+    }
+
     const user = {
-      email: emails?.[0].value,
+      email,
       name: displayName,
-      picture: photos?.[0].value,
+      picture: photos?.[0]?.value,
     };
 
     done(null, user);
