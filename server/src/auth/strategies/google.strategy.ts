@@ -24,12 +24,12 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     });
   }
 
-  async validate(
+  validate(
     _accessToken: string,
     _refreshToken: string,
     profile: Profile,
     done: VerifyCallback,
-  ) {
+  ): void {
     const { emails, photos, displayName } = profile;
 
     // Never link / create accounts by an e-mail that Google has not verified,

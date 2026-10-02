@@ -3,6 +3,7 @@ import { FileService } from './file.service';
 import { FileController } from './file.controller';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { path } from 'app-root-path';
+import type { ServerResponse } from 'http';
 
 @Module({
   controllers: [FileController],
@@ -13,7 +14,7 @@ import { path } from 'app-root-path';
       serveRoot: '/uploads',
       serveStaticOptions: {
         dotfiles: 'deny',
-        setHeaders: res => {
+        setHeaders: (res: ServerResponse) => {
           res.setHeader('X-Content-Type-Options', 'nosniff');
           res.setHeader('Content-Security-Policy', "default-src 'none'");
         },

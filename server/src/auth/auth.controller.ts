@@ -15,6 +15,7 @@ import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
 import { Request, Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
+import { OAuthUser } from './interfaces/oauth-user.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -52,8 +53,9 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
+    const cookies = req.cookies as Record<string, string | undefined>;
     const refreshTokenFromCookies =
-      req.cookies[this.authService.REFRESH_TOKEN_NAME];
+      cookies[this.authService.REFRESH_TOKEN_NAME];
 
     if (!refreshTokenFromCookies) {
       this.authService.removeRefreshTokenFromResponse(res);
@@ -79,15 +81,19 @@ export class AuthController {
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  async googleAuth(@Req() req) {}
+  googleAuth() {
+    // handled by the Google guard (redirects to Google)
+  }
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthCallback(
-    @Req() req,
+    @Req() req: Request & { user: OAuthUser },
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { refreshToken } = await this.authService.validateOAuthLogin(req);
+    const { refreshToken } = await this.authService.validateOAuthLogin(
+      req.user,
+    );
 
     this.authService.addRefreshTokenToResponse(res, refreshToken);
 

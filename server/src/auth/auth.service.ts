@@ -11,6 +11,7 @@ import { UserService } from 'src/user/user.service';
 import { AuthDto } from './dto/auth.dto';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
+import { OAuthUser } from './interfaces/oauth-user.interface';
 
 @Injectable()
 export class AuthService {
@@ -103,7 +104,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const { password: _password, ...safeUser } = user;
+    const { password, ...safeUser } = user;
 
     return safeUser;
   }
@@ -112,15 +113,15 @@ export class AuthService {
     return (this.dummyHash ??= hash(randomUUID()));
   }
 
-  async validateOAuthLogin(req: any) {
-    let user = await this.userService.getByEmail(req.user.email);
+  async validateOAuthLogin(oauthUser: OAuthUser) {
+    let user = await this.userService.getByEmail(oauthUser.email);
 
     if (!user) {
       user = await this.prisma.user.create({
         data: {
-          email: req.user.email,
-          name: req.user.name,
-          picture: req.user.picture,
+          email: oauthUser.email,
+          name: oauthUser.name,
+          picture: oauthUser.picture,
         },
         include: {
           stores: true,
