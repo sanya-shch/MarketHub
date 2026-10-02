@@ -27,7 +27,7 @@ export function Auth() {
             <div className='h-full bg-blue-600 hidden lg:flex items-center justify-center'>
                 <Image
                     src='/images/auth.png'
-                    alt='ReactShop'
+                    alt='MarketHub'
                     width={100}
                     height={100}
                 />

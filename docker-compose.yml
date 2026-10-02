@@ -1,0 +1,50 @@
+# Local development database.
+#   docker compose up -d --wait db        # start Postgres (data lives in a named volume)
+#   docker compose down                   # stop it, data is kept
+#   docker compose down -v                # stop it AND delete the data
+#
+# Credentials below are for local development only.
+name: markethub
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: markethub-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-markethub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-markethub}
+      POSTGRES_DB: ${POSTGRES_DB:-markethub}
+    ports:
+      # bound to localhost only: the dev database must not be reachable from the network
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Throw-away database for integration / e2e tests (kept in RAM, wiped on stop):
+  #   docker compose --profile test up -d --wait db-test
+  db-test:
+    image: postgres:17-alpine
+    container_name: markethub-db-test
+    profiles: ['test']
+    environment:
+      POSTGRES_USER: markethub
+      POSTGRES_PASSWORD: markethub
+      POSTGRES_DB: markethub_test
+    ports:
+      - '127.0.0.1:5433:5432'
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U markethub -d markethub_test']
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  db-data:
