@@ -16,7 +16,7 @@ model User {
   name      String    @default("Not specified")
   picture   String    @default("/uploads/no-user-image.png")
   stores    Store[]
-  favorites Product[]
+  favorites Product[] @relation("Favorites")
   reviews   Review[]
   orders    Order[]
 
@@ -29,14 +29,15 @@ model Store {
   updatedAt   DateTime    @updatedAt @map("updated_at")
   title       String
   description String?
-  user        User?       @relation(fields: [userId], references: [id])
-  userId      String?     @map("user_id")
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String      @map("user_id")
   products    Product[]
   categories  Category[]
   Color       Color[]
   reviews     Review[]
   orderItems  OrderItem[]
 
+  @@index([userId])
   @@map("store")
 }
 
@@ -48,17 +49,20 @@ model Product {
   description String
   price       Int
   images      String[]
-  store       Store?      @relation(fields: [storeId], references: [id])
-  storeId     String?     @map("store_id")
-  category    Category?   @relation(fields: [categoryId], references: [id])
-  categoryId  String?     @map("category_id")
-  color       Color?      @relation(fields: [colorId], references: [id])
-  colorId     String?     @map("color_id")
-  user        User?       @relation(fields: [userId], references: [id])
-  userId      String?     @map("user_id")
+  store       Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  storeId     String      @map("store_id")
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  categoryId  String      @map("category_id")
+  color       Color       @relation(fields: [colorId], references: [id], onDelete: Restrict)
+  colorId     String      @map("color_id")
+  favoritedBy User[]      @relation("Favorites")
   reviews     Review[]
   orderItems  OrderItem[]
 
+  @@index([storeId])
+  @@index([categoryId])
+  @@index([colorId])
+  @@index([createdAt])
   @@map("product")
 }
 
@@ -69,9 +73,10 @@ model Category {
   title       String
   description String
   products    Product[]
-  store       Store?    @relation(fields: [storeId], references: [id])
-  storeId     String?   @map("store_id")
+  store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  storeId     String    @map("store_id")
 
+  @@index([storeId])
   @@map("category")
 }
 
@@ -82,9 +87,10 @@ model Color {
   name      String
   value     String
   products  Product[]
-  store     Store?    @relation(fields: [storeId], references: [id])
-  storeId   String?   @map("store_id")
+  store     Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  storeId   String    @map("store_id")
 
+  @@index([storeId])
   @@map("color")
 }
 
@@ -94,13 +100,16 @@ model Review {
   updatedAt DateTime @updatedAt @map("updated_at")
   text      String
   rating    Int
-  user      User?    @relation(fields: [userId], references: [id])
-  userId    String?  @map("user_id")
-  product   Product? @relation(fields: [productId], references: [id])
-  productId String?  @map("product_id")
-  store     Store?   @relation(fields: [storeId], references: [id])
-  storeId   String?  @map("store_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id")
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String   @map("product_id")
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  storeId   String   @map("store_id")
 
+  @@unique([userId, productId])
+  @@index([productId])
+  @@index([storeId])
   @@map("review")
 }
 
@@ -111,9 +120,11 @@ model Order {
   status    OrderStatus @default(PENDING)
   items     OrderItem[]
   total     Int
-  user      User?       @relation(fields: [userId], references: [id])
-  userId    String?     @map("user_id")
+  user      User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  userId    String      @map("user_id")
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("order")
 }
 
@@ -121,15 +132,19 @@ model OrderItem {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-  order     Order?   @relation(fields: [orderId], references: [id])
-  orderId   String?  @map("order_id")
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String   @map("order_id")
   quantity  Int
-  price     Int
-  store     Store?   @relation(fields: [storeId], references: [id])
+  price     Int // price snapshot at the moment of purchase
+  title     String // product title snapshot: history survives product deletion
+  store     Store?   @relation(fields: [storeId], references: [id], onDelete: SetNull)
   storeId   String?  @map("store_id")
-  product   Product? @relation(fields: [productId], references: [id])
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
   productId String?  @map("product_id")
 
+  @@index([orderId])
+  @@index([storeId])
+  @@index([productId])
   @@map("order_item")
 }
 

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { ColorDto } from './dto/color.dto';
 import { assertStoreOwner } from 'src/common/ownership';
@@ -55,6 +59,16 @@ export class ColorService {
 
   async delete(id: string, userId: string) {
     await this.getById(id, userId);
+
+    const inUse = await this.prisma.product.count({
+      where: { colorId: id },
+    });
+
+    if (inUse) {
+      throw new ConflictException(
+        'Color is used by products: move or delete them first',
+      );
+    }
 
     return this.prisma.color.delete({
       where: {

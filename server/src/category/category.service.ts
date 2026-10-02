@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { CategoryDto } from './dto/category.dto';
 import { assertStoreOwner } from 'src/common/ownership';
@@ -55,6 +59,16 @@ export class CategoryService {
 
   async delete(id: string, userId: string) {
     await this.assertOwned(id, userId);
+
+    const inUse = await this.prisma.product.count({
+      where: { categoryId: id },
+    });
+
+    if (inUse) {
+      throw new ConflictException(
+        'Category is used by products: move or delete them first',
+      );
+    }
 
     return this.prisma.category.delete({
       where: {

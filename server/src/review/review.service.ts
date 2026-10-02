@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { ReviewDto } from './dto/review.dto';
 import { assertStoreOwner } from 'src/common/ownership';
@@ -51,27 +56,39 @@ export class ReviewService {
       throw new NotFoundException('Product not found');
     }
 
-    return this.prisma.review.create({
-      data: {
-        text: dto.text,
-        rating: dto.rating,
-        product: {
-          connect: {
-            id: productId,
+    try {
+      return await this.prisma.review.create({
+        data: {
+          text: dto.text,
+          rating: dto.rating,
+          product: {
+            connect: {
+              id: productId,
+            },
+          },
+          user: {
+            connect: {
+              id: userId,
+            },
+          },
+          store: {
+            connect: {
+              id: storeId,
+            },
           },
         },
-        user: {
-          connect: {
-            id: userId,
-          },
-        },
-        store: {
-          connect: {
-            id: storeId,
-          },
-        },
-      },
-    });
+      });
+    } catch (error) {
+      // @@unique([userId, productId]): one review per user and product
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('You have already reviewed this product');
+      }
+
+      throw error;
+    }
   }
 
   async delete(id: string, userId: string) {

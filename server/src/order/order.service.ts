@@ -20,7 +20,7 @@ export class OrderService {
     // prices and stores are taken from the DB, never from the client
     const products = await this.prisma.product.findMany({
       where: { id: { in: [...quantities.keys()] } },
-      select: { id: true, price: true, storeId: true },
+      select: { id: true, title: true, price: true, storeId: true },
     });
 
     if (products.length !== quantities.size) {
@@ -30,6 +30,7 @@ export class OrderService {
     const orderItems = products.map(product => ({
       quantity: quantities.get(product.id)!,
       price: product.price, // price snapshot at the moment of purchase
+      title: product.title, // title snapshot: history survives deletion
       productId: product.id,
       storeId: product.storeId,
     }));
