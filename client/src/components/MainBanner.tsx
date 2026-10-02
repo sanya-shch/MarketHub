@@ -19,7 +19,7 @@ export const MainBanner = () => {
 
             <Link href={PUBLIC_URL.explorer()}>
                 <Button className='hover:ml-3'>
-                    Let's go shopping{' '}
+                    Let&apos;s go shopping{' '}
                     <ArrowRight className='size-4 ml-2 transition-all' />
                 </Button>
             </Link>

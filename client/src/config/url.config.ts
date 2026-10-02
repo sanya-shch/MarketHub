@@ -8,6 +8,7 @@ export const PUBLIC_URL = {
     explorer: (query = '') => PUBLIC_URL.root(`/explorer${query}`),
     product: (id = '') => PUBLIC_URL.root(`/product/${id}`),
     category: (id = '') => PUBLIC_URL.root(`/category/${id}`),
+    thanks: () => PUBLIC_URL.root('/thanks'),
 };
 export const DASHBOARD_URL = {
     root: (url = '') => `/dashboard${url ? url : ''}`,

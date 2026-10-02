@@ -8,6 +8,8 @@ import { useCart } from '@/hooks/useCart';
 
 import { orderService } from '@/services/order.service';
 
+import { PUBLIC_URL } from '@/config/url.config';
+
 export const useCheckout = () => {
     const { items } = useCart();
     const { reset } = useActions();
@@ -22,9 +24,9 @@ export const useCheckout = () => {
                     quantity: item.quantity,
                 })),
             }),
-        onSuccess({ data }) {
-            // push confirmation
+        onSuccess() {
             reset();
+            push(PUBLIC_URL.thanks());
         },
         onError() {
             toast.error('Error creating payment');

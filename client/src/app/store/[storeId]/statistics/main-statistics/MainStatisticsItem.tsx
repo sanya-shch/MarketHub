@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import { IMainStatistics } from '@/shared/types/statistics.interface';
 
-import { getIcon } from './statistics.util';
+import { ICONS } from './statistics.util';
 import { formatPrice } from '@/utils/formatPrice';
 
 interface MainStatisticsItemProps {
@@ -12,7 +12,7 @@ interface MainStatisticsItemProps {
 }
 
 export function MainStatisticsItem({ item }: MainStatisticsItemProps) {
-    const Icon = getIcon(item.id);
+    const Icon = ICONS[item.id] ?? ICONS[1];
 
     return (
         <Card className='drop-shadow-sm'>

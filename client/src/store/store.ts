@@ -7,31 +7,27 @@ import {
     PersistConfig,
     REGISTER,
     REHYDRATE,
+    persistReducer,
     persistStore,
 } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 
 import { cartSlice } from './cart/cart.slice';
 
-const persistConfig: PersistConfig<any> = {
+const combinedReducers = combineReducers({
+    cart: cartSlice.reducer,
+});
+
+const persistConfig: PersistConfig<ReturnType<typeof combinedReducers>> = {
     key: 'react-shop-root',
     storage,
     whitelist: ['cart'],
 };
 
-const isClient = typeof window !== undefined;
-
-const combinedReducers = combineReducers({
-    cart: cartSlice.reducer,
-});
-
-let rootReducer = combinedReducers;
-
-if (isClient) {
-    const { persistReducer } = require('redux-persist');
-
-    rootReducer = persistReducer(persistConfig, combinedReducers);
-}
+// redux-persist's default storage is a no-op on the server, so the reducer can
+// be wrapped unconditionally (the old `typeof window !== undefined` check was
+// always true anyway).
+const rootReducer = persistReducer(persistConfig, combinedReducers);
 
 export const store = configureStore({
     reducer: rootReducer,
@@ -52,4 +48,4 @@ export const store = configureStore({
 
 export const persistor = persistStore(store);
 
-export type TypeRootState = ReturnType<typeof rootReducer>;
+export type TypeRootState = ReturnType<typeof combinedReducers>;

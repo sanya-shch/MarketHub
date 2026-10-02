@@ -36,7 +36,7 @@ export const ProductReviews = ({ product }: ProductReviewsProps) => {
             <div className='grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-4'>
                 {product.reviews.length ? (
                     product.reviews.map(review => (
-                        <div className='border rounded-lg p-4'>
+                        <div key={review.id} className='border rounded-lg p-4'>
                             <div className='flex justify-between'>
                                 <div className='flex items-center gap-x-4 font-medium'>
                                     <Image

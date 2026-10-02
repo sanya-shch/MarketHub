@@ -22,7 +22,7 @@ export const LastUsers = ({ data }: LastUsersProps) => {
             <CardContent>
                 {data.length ? (
                     data.map(user => (
-                        <div className='flex items-center mt-5'>
+                        <div key={user.id} className='flex items-center mt-5'>
                             <Image
                                 src={user.picture}
                                 alt={user.name}

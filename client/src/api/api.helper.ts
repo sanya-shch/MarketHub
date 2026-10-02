@@ -2,12 +2,18 @@ export const getContentType = () => ({
     'Content-type': 'application/json',
 });
 
-export const errorCatch = (error: any): string => {
-    const message = error?.response?.data?.message;
+type ErrorWithResponse = {
+    message?: string;
+    response?: { data?: { message?: string | string[] } };
+};
+
+export const errorCatch = (error: unknown): string => {
+    const err = error as ErrorWithResponse;
+    const message = err?.response?.data?.message;
 
     return message
-        ? typeof error.response.data.message === 'object'
+        ? typeof message === 'object'
             ? message[0]
             : message
-        : error.message;
+        : (err?.message ?? 'Unknown error');
 };

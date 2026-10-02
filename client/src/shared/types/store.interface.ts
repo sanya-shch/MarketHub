@@ -4,6 +4,6 @@ export interface IStore {
     description: string;
 }
 
-export interface IStoreCreate extends Pick<IStore, 'title'> {}
+export type IStoreCreate = Pick<IStore, 'title'>;
 
-export interface IStoreEdit extends Omit<IStore, 'id'> {}
+export type IStoreEdit = Omit<IStore, 'id'>;

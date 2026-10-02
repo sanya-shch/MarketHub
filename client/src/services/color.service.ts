@@ -2,7 +2,7 @@ import { IColor, IColorInput } from '@/shared/types/color.interface';
 
 import { API_URL } from '@/config/api.config';
 
-import { axiosClassic, axiosWithAuth } from '@/api/api.interceptors';
+import { axiosWithAuth } from '@/api/api.interceptors';
 
 class ColorService {
     async getByStoreId(id: string) {

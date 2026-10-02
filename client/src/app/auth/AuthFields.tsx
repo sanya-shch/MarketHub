@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { IAuthForm } from '@/shared/types/auth.interface';
 
 interface AuthFieldsProps {
-    form: UseFormReturn<IAuthForm, any, IAuthForm>;
+    form: UseFormReturn<IAuthForm>;
     isPending: boolean;
     isReg?: boolean;
 }

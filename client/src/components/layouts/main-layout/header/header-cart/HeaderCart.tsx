@@ -20,7 +20,8 @@ export function HeaderCart() {
     const { profile } = useProfile();
 
     const handleClick = () => {
-        profile ? createPayment() : push(PUBLIC_URL.auth());
+        if (profile) createPayment();
+        else push(PUBLIC_URL.auth());
     };
 
     return (

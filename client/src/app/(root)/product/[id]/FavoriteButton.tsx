@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { FC } from 'react';
 import { AiFillHeart, AiOutlineHeart } from 'react-icons/ai';
 
 import { Button } from '@/components/ui/button';

@@ -6,4 +6,4 @@ export interface IColor {
     storeId: string;
 }
 
-export interface IColorInput extends Pick<IColor, 'name' | 'value'> {}
+export type IColorInput = Pick<IColor, 'name' | 'value'>;
