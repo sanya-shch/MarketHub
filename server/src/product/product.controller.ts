@@ -8,12 +8,12 @@ import {
   Post,
   Put,
   Query,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { ProductDto } from './dto/product.dto';
+import { PopularQueryDto } from './dto/popular-query.dto';
+import { ProductQueryDto } from './dto/product-query.dto';
 import { CurrentUser } from 'src/user/decorators/user.decorator';
 
 @Controller('products')
@@ -21,8 +21,8 @@ export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
   @Get()
-  async getAll(@Query('searchTerm') searchTerm: string) {
-    return this.productService.getAll(searchTerm);
+  async getAll(@Query() query: ProductQueryDto) {
+    return this.productService.getAll(query);
   }
 
   @Get('by-storeId/:storeId')
@@ -35,14 +35,9 @@ export class ProductController {
     return this.productService.getById(id);
   }
 
-  @Get('by-category/:categoryId')
-  async getByCategory(@Param('categoryId') categoryId: string) {
-    return this.productService.getByCategory(categoryId);
-  }
-
   @Get('most-popular')
-  async getMostPopular() {
-    return this.productService.getMostPopular();
+  async getMostPopular(@Query() query: PopularQueryDto) {
+    return this.productService.getMostPopular(query.limit);
   }
 
   @Get('similar/:id')
@@ -50,7 +45,6 @@ export class ProductController {
     return this.productService.getSimilar(id);
   }
 
-  @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Auth()
   @Post(':storeId')
@@ -62,7 +56,6 @@ export class ProductController {
     return this.productService.create(storeId, userId, dto);
   }
 
-  @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Auth()
   @Put(':id')

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 async function getProducts() {
-    const data = (await productService.getMostPopular()).slice(0, 6);
+    const data = await productService.getMostPopular(6);
 
     return data;
 }

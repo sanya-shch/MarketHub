@@ -44,10 +44,11 @@ export async function generateMetadata({
     };
 }
 
-export async function generateStaticParams() {
-    const products = await productService.getAll();
-
-    return products.map(product => ({ id: product.id }));
+// Nothing is pre-rendered at build time (so `next build` does not need a
+// running API); a page is rendered on its first request and then cached and
+// re-validated every `revalidate` seconds (on-demand ISR).
+export function generateStaticParams() {
+    return [];
 }
 
 export default async function Page({ params }: PageProps) {

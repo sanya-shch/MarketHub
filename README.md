@@ -54,3 +54,18 @@ cd client
 yarn install
 yarn dev
 ```
+
+## API notes
+
+`GET /products` is the public catalog and returns `{ items, meta: { page, limit, total, totalPages } }`.
+
+| Query param | Meaning |
+|---|---|
+| `searchTerm` | case-insensitive match in title / description (max 100 chars) |
+| `categoryId`, `minPrice`, `maxPrice` | filters |
+| `sort` | `newest` (default), `price_asc`, `price_desc` |
+| `page`, `limit` | pagination, `limit` is 1-48 (default 12) |
+
+Unknown query parameters or body properties are rejected with `400` (global `ValidationPipe`
+with `whitelist` + `forbidNonWhitelisted`). Login and registration are limited to 5 requests per
+minute per IP, everything else to 100 per minute.

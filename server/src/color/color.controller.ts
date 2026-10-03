@@ -7,8 +7,6 @@ import {
   Param,
   Post,
   Put,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { ColorService } from './color.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
@@ -34,7 +32,6 @@ export class ColorController {
     return this.colorService.getById(id, userId);
   }
 
-  @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Auth()
   @Post(':storeId')
@@ -46,7 +43,6 @@ export class ColorController {
     return this.colorService.create(storeId, userId, dto);
   }
 
-  @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Auth()
   @Put(':id')

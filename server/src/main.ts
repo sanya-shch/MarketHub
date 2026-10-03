@@ -1,19 +1,20 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import * as cookieParser from 'cookie-parser';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
+import { configureApp } from './app.setup';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const clientUrl = process.env.CLIENT_URL;
+
+  // fail fast: without it CORS would silently reject every browser request
+  if (!clientUrl) throw new Error('CLIENT_URL is not set');
+
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  configureApp(app, clientUrl);
 
   const PORT = process.env.PORT || 5001;
-
-  app.use(cookieParser());
-  app.enableCors({
-    origin: [process.env.CLIENT_URL],
-    credentials: true,
-    exposedHeaders: 'set-cookie',
-  });
 
   await app.listen(PORT, '0.0.0.0');
 

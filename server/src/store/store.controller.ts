@@ -7,8 +7,6 @@ import {
   Param,
   Post,
   Put,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { StoreService } from './store.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
@@ -32,7 +30,6 @@ export class StoreController {
   @Auth()
   @Post()
   @HttpCode(200)
-  @UsePipes(new ValidationPipe())
   async create(@CurrentUser('id') userId: string, @Body() dto: CreateStoreDto) {
     return this.storeService.create(userId, dto);
   }
@@ -40,7 +37,6 @@ export class StoreController {
   @Auth()
   @Put(':id')
   @HttpCode(200)
-  @UsePipes(new ValidationPipe())
   async update(
     @Param('id') storeId: string,
     @CurrentUser('id') userId: string,

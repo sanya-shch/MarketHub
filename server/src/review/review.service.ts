@@ -3,10 +3,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { ReviewDto } from './dto/review.dto';
 import { assertStoreOwner } from 'src/common/ownership';
+import { isUniqueViolation } from 'src/common/prisma-errors';
 
 const REVIEW_USER_SELECT = { id: true, name: true, picture: true } as const;
 
@@ -80,10 +80,7 @@ export class ReviewService {
       });
     } catch (error) {
       // @@unique([userId, productId]): one review per user and product
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
+      if (isUniqueViolation(error)) {
         throw new ConflictException('You have already reviewed this product');
       }
 

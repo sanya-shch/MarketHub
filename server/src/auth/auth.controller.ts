@@ -8,20 +8,20 @@ import {
   Res,
   UnauthorizedException,
   UseGuards,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
 import { Request, Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 import { OAuthUser } from './interfaces/oauth-user.interface';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @UsePipes(new ValidationPipe())
+  // brute-force protection: 5 attempts per minute and IP
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @HttpCode(200)
   @Post('login')
   async login(@Body() dto: AuthDto, @Res({ passthrough: true }) res: Response) {
@@ -32,7 +32,7 @@ export class AuthController {
     return response;
   }
 
-  @UsePipes(new ValidationPipe())
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @HttpCode(200)
   @Post('register')
   async register(
@@ -46,7 +46,7 @@ export class AuthController {
     return response;
   }
 
-  @UsePipes(new ValidationPipe())
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @HttpCode(200)
   @Post('login/access-token')
   async getNewTokens(

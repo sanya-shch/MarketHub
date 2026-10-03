@@ -1,3 +1,7 @@
+import {
+    IPaginated,
+    IProductsQuery,
+} from '@/shared/types/pagination.interface';
 import { IProduct, IProductInput } from '@/shared/types/product.interface';
 
 import { API_URL } from '@/config/api.config';
@@ -5,14 +9,14 @@ import { API_URL } from '@/config/api.config';
 import { axiosClassic, axiosWithAuth } from '@/api/api.interceptors';
 
 class ProductService {
-    async getAll(searchTerm?: string | null) {
-        const { data } = await axiosClassic<IProduct[]>({
+    async getAll(query: IProductsQuery = {}) {
+        const { data } = await axiosClassic<IPaginated<IProduct>>({
             url: API_URL.products(),
             method: 'GET',
-            params: searchTerm ? { searchTerm } : {},
+            params: query,
         });
 
-        return data || [];
+        return data;
     }
 
     async getByStoreId(id: string) {
@@ -33,19 +37,11 @@ class ProductService {
         return data;
     }
 
-    async getByCategory(id: string) {
-        const { data } = await axiosClassic<IProduct[]>({
-            url: API_URL.products(`/by-category/${id}`),
-            method: 'GET',
-        });
-
-        return data;
-    }
-
-    async getMostPopular() {
+    async getMostPopular(limit = 6) {
         const { data } = await axiosClassic<IProduct[]>({
             url: API_URL.products('/most-popular'),
             method: 'GET',
+            params: { limit },
         });
 
         return data;

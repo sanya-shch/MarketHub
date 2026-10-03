@@ -4,48 +4,55 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
+import { Prisma } from '@prisma/client';
 import { ProductDto } from './dto/product.dto';
+import { ProductQueryDto } from './dto/product-query.dto';
 import { assertStoreOwner } from 'src/common/ownership';
 
 @Injectable()
 export class ProductService {
   constructor(private prisma: PrismaService) {}
 
-  async getAll(searchTerm?: string) {
-    if (searchTerm) return this.getSearchTermFilter(searchTerm);
+  /** Public catalog: search, filters, sorting and pagination in one query. */
+  async getAll(query: ProductQueryDto) {
+    const { searchTerm, categoryId, minPrice, maxPrice, sort, page, limit } =
+      query;
 
-    return this.prisma.product.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
-      include: {
-        category: true,
-      },
-    });
-  }
-
-  private async getSearchTermFilter(searchTerm: string) {
-    return this.prisma.product.findMany({
-      where: {
+    const where: Prisma.ProductWhereInput = {
+      ...(categoryId && { categoryId }),
+      ...((minPrice !== undefined || maxPrice !== undefined) && {
+        price: { gte: minPrice, lte: maxPrice },
+      }),
+      ...(searchTerm && {
         OR: [
-          {
-            title: {
-              contains: searchTerm,
-              mode: 'insensitive',
-            },
-          },
-          {
-            description: {
-              contains: searchTerm,
-              mode: 'insensitive',
-            },
-          },
+          { title: { contains: searchTerm, mode: 'insensitive' } },
+          { description: { contains: searchTerm, mode: 'insensitive' } },
         ],
-      },
-      include: {
-        category: true,
-      },
-    });
+      }),
+    };
+
+    const orderBy: Prisma.ProductOrderByWithRelationInput[] =
+      sort === 'price_asc'
+        ? [{ price: 'asc' }, { id: 'asc' }]
+        : sort === 'price_desc'
+          ? [{ price: 'desc' }, { id: 'asc' }]
+          : [{ createdAt: 'desc' }, { id: 'asc' }]; // `id` keeps pages stable
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.product.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit,
+        include: { category: true },
+      }),
+      this.prisma.product.count({ where }),
+    ]);
+
+    return {
+      items,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async getByStoreId(storeId: string) {
@@ -80,44 +87,26 @@ export class ProductService {
     return product;
   }
 
-  async getByCategory(categoryId: string) {
-    const products = await this.prisma.product.findMany({
-      where: { category: { id: categoryId } },
-      include: {
-        category: true,
-      },
-    });
-
-    if (!products) throw new NotFoundException('Products not found');
-
-    return products;
-  }
-
-  async getMostPopular() {
-    const mostPopularProducts = await this.prisma.orderItem.groupBy({
+  async getMostPopular(limit = 6) {
+    const sold = await this.prisma.orderItem.groupBy({
       by: ['productId'],
-      _count: { id: true },
-      orderBy: {
-        _count: { id: 'desc' },
-      },
+      where: { productId: { not: null } },
+      _sum: { quantity: true },
+      orderBy: { _sum: { quantity: 'desc' } },
+      take: limit,
     });
 
-    const productIds = mostPopularProducts.map(
-      item => item.productId as string,
-    );
+    const ids = sold.map(item => item.productId as string);
 
     const products = await this.prisma.product.findMany({
-      where: {
-        id: {
-          in: productIds,
-        },
-      },
-      include: {
-        category: true,
-      },
+      where: { id: { in: ids } },
+      include: { category: true },
     });
 
-    return products;
+    // `findMany({ id: { in } })` does not keep the order of `ids`
+    const byId = new Map(products.map(product => [product.id, product]));
+
+    return ids.flatMap(id => byId.get(id) ?? []);
   }
 
   async getSimilar(id: string) {
@@ -128,9 +117,7 @@ export class ProductService {
 
     const products = await this.prisma.product.findMany({
       where: {
-        category: {
-          title: currentProduct.category?.title,
-        },
+        categoryId: currentProduct.categoryId,
         NOT: {
           id: currentProduct.id,
         },
@@ -141,6 +128,7 @@ export class ProductService {
       orderBy: {
         createdAt: 'desc',
       },
+      take: 8,
     });
 
     return products;

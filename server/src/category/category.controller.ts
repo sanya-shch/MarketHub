@@ -7,8 +7,6 @@ import {
   Param,
   Post,
   Put,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { CategoryService } from './category.service';
@@ -33,7 +31,6 @@ export class CategoryController {
     return this.categoryService.getById(id);
   }
 
-  @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Auth()
   @Post(':storeId')
@@ -45,7 +42,6 @@ export class CategoryController {
     return this.categoryService.create(storeId, userId, dto);
   }
 
-  @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Auth()
   @Put(':id')

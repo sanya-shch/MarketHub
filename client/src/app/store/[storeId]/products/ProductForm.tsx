@@ -153,6 +153,10 @@ export const ProductForm = ({
                             name='price'
                             rules={{
                                 required: 'Price is required',
+                                validate: value =>
+                                    (Number.isInteger(Number(value)) &&
+                                        Number(value) > 0) ||
+                                    'Price must be a whole number greater than 0',
                             }}
                             render={({ field }) => (
                                 <FormItem>
