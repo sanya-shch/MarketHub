@@ -9,6 +9,8 @@ import { IAuthForm } from '@/shared/types/auth.interface';
 
 import { DASHBOARD_URL } from '@/config/url.config';
 
+import { errorCatch } from '@/api/api.helper';
+
 export const useAuthForm = (isReg: boolean) => {
     const router = useRouter();
     const form = useForm<IAuthForm>({
@@ -24,8 +26,8 @@ export const useAuthForm = (isReg: boolean) => {
             router.replace(DASHBOARD_URL.home());
         },
         onError(error) {
-            if (error.message) toast.error(error.message);
-            else toast.error('Error during authorization');
+            // the server's message ("Invalid credentials", "User already exists", ...)
+            toast.error(errorCatch(error) || 'Error during authorization');
         },
     });
     const onSubmit: SubmitHandler<IAuthForm> = data => {

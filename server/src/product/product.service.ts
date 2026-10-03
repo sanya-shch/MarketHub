@@ -8,10 +8,14 @@ import { Prisma } from '@prisma/client';
 import { ProductDto } from './dto/product.dto';
 import { ProductQueryDto } from './dto/product-query.dto';
 import { assertStoreOwner } from 'src/common/ownership';
+import { FileService } from 'src/file/file.service';
 
 @Injectable()
 export class ProductService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private files: FileService,
+  ) {}
 
   /** Public catalog: search, filters, sorting and pagination in one query. */
   async getAll(query: ProductQueryDto) {
@@ -156,7 +160,7 @@ export class ProductService {
 
     await this.assertRefsBelongToStore(product.storeId, dto);
 
-    return this.prisma.product.update({
+    const updated = await this.prisma.product.update({
       where: {
         id,
       },
@@ -170,28 +174,39 @@ export class ProductService {
         colorId: dto.colorId,
       },
     });
+
+    // images the product no longer has are removed from the disk
+    await this.files.deleteUnusedImages(
+      product.images.filter(image => !dto.images.includes(image)),
+    );
+
+    return updated;
   }
 
   async delete(id: string, userId: string) {
-    await this.getOwned(id, userId);
+    const product = await this.getOwned(id, userId);
 
-    return this.prisma.product.delete({
+    const deleted = await this.prisma.product.delete({
       where: {
         id,
       },
     });
+
+    await this.files.deleteUnusedImages(product.images);
+
+    return deleted;
   }
 
   /** The product must exist and its store must belong to the user. */
   private async getOwned(id: string, userId: string) {
     const product = await this.prisma.product.findFirst({
       where: { id, store: { userId } },
-      select: { id: true, storeId: true },
+      select: { id: true, storeId: true, images: true },
     });
 
-    if (!product?.storeId) throw new NotFoundException('Product not found');
+    if (!product) throw new NotFoundException('Product not found');
 
-    return { id: product.id, storeId: product.storeId };
+    return product;
   }
 
   /** Category and color must belong to the same store as the product. */

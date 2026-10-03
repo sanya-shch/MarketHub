@@ -45,7 +45,7 @@ export function HeaderCart() {
                     )}
                 </div>
 
-                {items.length && (
+                {items.length > 0 && (
                     <>
                         <div className='text-lg font-medium'>
                             Total: {formatPrice(total)}

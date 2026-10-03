@@ -1,10 +1,21 @@
 import { Injectable } from '@nestjs/common';
+import { OrderStatus, Prisma } from '@prisma/client';
 import * as dayjs from 'dayjs';
 import 'dayjs/locale/en';
 import { PrismaService } from 'src/prisma.service';
 import { assertStoreOwner } from 'src/common/ownership';
 
 dayjs.locale('en');
+
+/**
+ * Orders that count as sales. Nothing marks an order PAYED yet (there is no
+ * payment provider), so PENDING is counted too. When payments are connected,
+ * change this to ['PAYED'] and every statistic below follows.
+ */
+const COUNTED_STATUSES: OrderStatus[] = [
+  OrderStatus.PENDING,
+  OrderStatus.PAYED,
+];
 
 const monthNames = [
   'Jan',
@@ -54,32 +65,17 @@ export class StatisticsService {
   }
 
   private async calculateTotalRevenue(storeId: string) {
-    const orders = await this.prisma.order.findMany({
-      where: {
-        items: {
-          some: {
-            store: {
-              id: storeId,
-            },
-          },
-        },
-      },
-      include: {
-        items: {
-          where: { storeId },
-        },
-      },
-    });
+    const [row] = await this.prisma.$queryRaw<{ total: bigint | null }[]>(
+      Prisma.sql`
+        SELECT COALESCE(SUM(i."price" * i."quantity"), 0) AS total
+        FROM "order_item" i
+        JOIN "order" o ON o."id" = i."order_id"
+        WHERE i."store_id" = ${storeId}
+          AND o."status"::text IN (${Prisma.join(COUNTED_STATUSES)})
+      `,
+    );
 
-    const totalRevenue = orders.reduce((acc, order) => {
-      const total = order.items.reduce((itemAcc, item) => {
-        return itemAcc + item.price * item.quantity;
-      }, 0);
-
-      return acc + total;
-    }, 0);
-
-    return totalRevenue;
+    return Number(row?.total ?? 0);
   }
 
   private async countProducts(storeId: string) {
@@ -112,7 +108,9 @@ export class StatisticsService {
     const endDate = dayjs().endOf('day').toDate();
 
     const salesRaw = await this.prisma.order.findMany({
+      orderBy: { createdAt: 'asc' }, // the chart goes left to right in time
       where: {
+        status: { in: COUNTED_STATUSES },
         createdAt: {
           gte: startDate,
           lte: endDate,
@@ -155,51 +153,51 @@ export class StatisticsService {
     return monthlySales;
   }
 
+  /** The 5 most recent customers of the store and what they spent in their last order. */
   private async getLastUsers(storeId: string) {
-    const lastUsers = await this.prisma.user.findMany({
+    const orders = await this.prisma.order.findMany({
       where: {
-        orders: {
-          some: {
-            items: {
-              some: { storeId },
-            },
-          },
+        status: { in: COUNTED_STATUSES },
+        items: { some: { storeId } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 100, // enough to find 5 distinct customers in practice
+      select: {
+        user: {
+          select: { id: true, name: true, email: true, picture: true },
         },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: 5,
-      include: {
-        orders: {
-          where: {
-            items: {
-              some: { storeId },
-            },
-          },
-          include: {
-            items: {
-              where: { storeId },
-              select: { price: true },
-            },
-          },
+        // only this store's items, with quantity
+        items: {
+          where: { storeId },
+          select: { price: true, quantity: true },
         },
       },
     });
 
-    return lastUsers.map(user => {
-      const lastOrder = user.orders[user.orders.length - 1];
-      const total = lastOrder.items.reduce((acc, item) => {
-        return acc + item.price;
-      }, 0);
+    const lastUsers = new Map<
+      string,
+      {
+        id: string;
+        name: string;
+        email: string;
+        picture: string;
+        total: number;
+      }
+    >();
 
-      return {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        picture: user.picture,
-        total,
-      };
-    });
+    for (const order of orders) {
+      if (lastUsers.size >= 5) break;
+      if (lastUsers.has(order.user.id)) continue; // orders are newest first
+
+      lastUsers.set(order.user.id, {
+        ...order.user,
+        total: order.items.reduce(
+          (acc, item) => acc + item.price * item.quantity,
+          0,
+        ),
+      });
+    }
+
+    return [...lastUsers.values()];
   }
 }

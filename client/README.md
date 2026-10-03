@@ -1,36 +1,25 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MarketHub client
 
-## Getting Started
+Next.js 16 (App Router) storefront and seller dashboard.
 
-First, run the development server:
+Setup and the full local stack are described in the [root README](../README.md).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env
+yarn install
+yarn dev       # http://localhost:3000
+yarn lint      # ESLint (flat config, eslint-config-next)
+yarn build     # needs the API to be reachable
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Structure
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Path | What is there |
+|---|---|
+| `src/app/(root)` | public shop: home, catalog (`/explorer`), category, product, user dashboard |
+| `src/app/store/[storeId]` | seller dashboard: products, categories, colors, statistics |
+| `src/proxy.ts` | redirects guests away from private pages and signed-in users away from `/auth` |
+| `src/services` | API calls (axios); `src/api` holds the client with token refresh |
+| `src/store` | Redux Toolkit: only the cart (persisted). Server data lives in TanStack Query |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The catalog and category pages are server-rendered and driven by the URL (`?page=`, `?sort=`, `?searchTerm=`).

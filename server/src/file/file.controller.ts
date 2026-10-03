@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { FileService } from './file.service';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 
 const MAX_FILES = 10;
@@ -18,6 +19,8 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 
+  // uploads are the most expensive endpoint: 20 requests per minute and IP
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @HttpCode(200)
   @UseInterceptors(
     FilesInterceptor('files', MAX_FILES, {

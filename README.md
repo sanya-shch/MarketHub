@@ -1,6 +1,11 @@
-## React shop
+## MarketHub
 
-React, Next.js, Redux Toolkit, Tailwind, Shadcn UI, Nest.js, PostgreSQL, Prisma
+Multi-store e-commerce platform. Sellers manage their own stores (products, categories, colors, statistics), customers browse the catalog, leave reviews and place orders.
+
+**Stack:** Next.js 16 (App Router) · React 19 · Redux Toolkit · TanStack Query · Tailwind 4 · shadcn/ui · NestJS 11 · Prisma · PostgreSQL.
+
+- [`client/`](client) - Next.js storefront and seller dashboard
+- [`server/`](server) - NestJS REST API, Prisma schema and migrations
 
 ## Getting started
 
@@ -40,20 +45,14 @@ Useful database commands:
 
 ### 3. Client (http://localhost:3000)
 
-Create `client/.env`:
-
-```
-APP_ENV=development
-APP_URL=http://localhost:3000
-APP_DOMAIN=localhost
-SERVER_URL=http://localhost:5000
-```
-
 ```bash
 cd client
+cp .env.example .env     # NEXT_PUBLIC_* values are inlined into the browser bundle at build time
 yarn install
 yarn dev
 ```
+
+`yarn build` needs a reachable API (the home page is rendered with data from it).
 
 ## API notes
 

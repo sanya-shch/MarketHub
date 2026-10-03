@@ -1,11 +1,11 @@
-import { ImagePlus } from 'lucide-react';
+import { ImagePlus, X } from 'lucide-react';
 import Image from 'next/image';
 
 import { cn } from '@/lib/utils';
 
 import { Button } from '../button';
 
-import { useUpload } from './useUpload';
+import { MAX_IMAGES, useUpload } from './useUpload';
 
 interface ImageUploadProps {
     isDisabled: boolean;
@@ -18,8 +18,13 @@ export const ImageUpload = ({
     onChange,
     value,
 }: ImageUploadProps) => {
-    const { handleButtonClick, handleFileChange, isUploading, fileInputRef } =
-        useUpload(onChange);
+    const {
+        handleButtonClick,
+        handleFileChange,
+        removeImage,
+        isUploading,
+        fileInputRef,
+    } = useUpload(value, onChange);
 
     return (
         <div>
@@ -35,13 +40,27 @@ export const ImageUpload = ({
                             fill
                             className='object-cover'
                         />
+
+                        <Button
+                            type='button'
+                            variant='secondary'
+                            size='icon'
+                            disabled={isDisabled}
+                            onClick={() => removeImage(url)}
+                            aria-label='Remove image'
+                            className='absolute top-2 right-2 size-7'
+                        >
+                            <X className='size-4' />
+                        </Button>
                     </div>
                 ))}
             </div>
 
             <Button
                 type='button'
-                disabled={isDisabled || isUploading}
+                disabled={
+                    isDisabled || isUploading || value.length >= MAX_IMAGES
+                }
                 variant='secondary'
                 onClick={handleButtonClick}
                 className={cn({

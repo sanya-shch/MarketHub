@@ -8,6 +8,7 @@ import type { ServerResponse } from 'http';
 @Module({
   controllers: [FileController],
   providers: [FileService],
+  exports: [FileService],
   imports: [
     ServeStaticModule.forRoot({
       rootPath: `${path}/uploads`,

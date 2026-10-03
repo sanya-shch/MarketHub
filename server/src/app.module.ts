@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { PrismaModule } from './prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { ColorModule } from './color/color.module';
@@ -15,7 +16,8 @@ import { ReviewModule } from './review/review.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({ isGlobal: true }),
+    PrismaModule,
     // 100 requests per minute and IP for everything; login / register are
     // limited more strictly with @Throttle() in the auth controller.
     ThrottlerModule.forRoot({

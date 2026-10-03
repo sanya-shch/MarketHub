@@ -36,7 +36,7 @@ export class StoreService {
       },
       data: {
         title: dto.title,
-        userId,
+        description: dto.description,
       },
     });
   }

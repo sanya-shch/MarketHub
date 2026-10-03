@@ -5,20 +5,12 @@ import { UserModule } from 'src/user/user.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { getJwtConfig } from 'src/config/jwt.config';
-import { PrismaService } from 'src/prisma.service';
-import { UserService } from 'src/user/user.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 
 @Module({
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    PrismaService,
-    UserService,
-    JwtStrategy,
-    GoogleStrategy,
-  ],
+  providers: [AuthService, JwtStrategy, GoogleStrategy],
   imports: [
     UserModule,
     ConfigModule,

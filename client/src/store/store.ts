@@ -19,7 +19,7 @@ const combinedReducers = combineReducers({
 });
 
 const persistConfig: PersistConfig<ReturnType<typeof combinedReducers>> = {
-    key: 'react-shop-root',
+    key: 'markethub-root',
     storage,
     whitelist: ['cart'],
 };

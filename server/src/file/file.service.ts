@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { path as rootPath } from 'app-root-path';
 import { randomUUID } from 'crypto';
-import { ensureDir, writeFile } from 'fs-extra';
+import { ensureDir, remove, writeFile } from 'fs-extra';
 import { join } from 'path';
+import { PrismaService } from 'src/prisma.service';
 import { FileResponse } from './file.interface';
 
 // `folder` goes into a file-system path, so it is an allow-list, never raw input
@@ -32,8 +33,16 @@ const IMAGE_SIGNATURES: { ext: string; match: (b: Buffer) => boolean }[] = [
   },
 ];
 
+// the only shape of path this service ever hands out (see saveFiles)
+const UPLOADED_PATH =
+  /^\/uploads\/([a-z]+)\/[0-9a-f-]{36}\.(jpg|png|gif|webp)$/;
+
 @Injectable()
 export class FileService {
+  private readonly logger = new Logger(FileService.name);
+
+  constructor(private prisma: PrismaService) {}
+
   async saveFiles(files: Express.Multer.File[], folder: string = 'products') {
     if (!ALLOWED_FOLDERS.has(folder)) {
       throw new BadRequestException('Unknown upload folder');
@@ -74,5 +83,30 @@ export class FileService {
     );
 
     return response;
+  }
+
+  /**
+   * Deletes uploaded images that no product uses anymore. Never throws: a file
+   * that cannot be removed must not fail the request that triggered the cleanup.
+   */
+  async deleteUnusedImages(urls: string[]) {
+    for (const url of new Set(urls)) {
+      const match = UPLOADED_PATH.exec(url);
+
+      if (!match || !ALLOWED_FOLDERS.has(match[1])) continue;
+
+      try {
+        // another product may reference the same file: keep it then
+        const stillUsed = await this.prisma.product.count({
+          where: { images: { has: url } },
+        });
+
+        if (stillUsed) continue;
+
+        await remove(join(rootPath, url));
+      } catch (error) {
+        this.logger.warn(`Could not delete ${url}: ${String(error)}`);
+      }
+    }
   }
 }
